@@ -1,5 +1,9 @@
 import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import io.restassured.response.ValidatableResponse;
+import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -14,7 +18,8 @@ public class UserTest {
     private final static String USER_EMAIL = "Smaug" + Math.random() + "@example.com";
     private final static String PASSWORD = "Smaug1234";
     private final static String USER_NAME = "Smaug" + Math.random();
-    private static int userId = 0;
+    private final static String URL = "/api/auth";
+    private static String accessToken = "";
 
     public UserTest(User user, int status, String message) {
         this.user = user;
@@ -37,18 +42,28 @@ public class UserTest {
     @DisplayName("Create user")
     @Step("Compare message and status of response")
     public void userIsCreated() {
+        ValidatableResponse response = Specifications.postRequest(user, URL + "/register");
         if (message != null) {
-            Specifications.postRequest(user, "/api/auth/register")
-                    .assertThat().body("message", equalTo(message))
+            response.assertThat().body("message", equalTo(message))
                     .and()
                     .statusCode(status);
         } else {
-            Specifications.postRequest(user, "/api/auth/register")
-                    .assertThat()
+            response.assertThat()
                     .statusCode(status);
             if(status == 200) {
-                userId =
+                accessToken = response.extract().path("accessToken").toString().split(" ")[1];
             }
+        }
+    }
+
+    @AfterClass
+    public static void deleteCourier() {
+        if (!accessToken.isEmpty()) {
+            RestAssured.given().auth().oauth2(accessToken)
+                    .baseUri("https://stellarburgers.nomoreparties.site/api/auth/user")
+                    .contentType(ContentType.JSON)
+                    .when()
+                    .delete().then().assertThat().statusCode(202);
         }
     }
 }

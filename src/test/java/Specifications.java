@@ -14,6 +14,14 @@ public class Specifications {
                 .get(url).then();
     }
 
+    public static ValidatableResponse getRequest(String url, String token) {
+        return RestAssured.given().auth().oauth2(token)
+                .baseUri(BASE_URL)
+                .contentType(ContentType.JSON)
+                .when()
+                .get(url).then();
+    }
+
     public static ValidatableResponse postRequest(Object object, String url) {
         return RestAssured.given()
                 .baseUri(BASE_URL)
@@ -23,11 +31,13 @@ public class Specifications {
                 .post(url).then();
     }
 
-    public static ValidatableResponse deleteRequest(String url) {
-        return RestAssured.given()
+    public static ValidatableResponse postRequest(Object object, String url, String token) {
+        return RestAssured.given().auth().oauth2(token)
                 .baseUri(BASE_URL)
                 .contentType(ContentType.JSON)
+                .body(object)
                 .when()
-                .delete(url).then();
+                .post(url).then();
     }
+
 }
