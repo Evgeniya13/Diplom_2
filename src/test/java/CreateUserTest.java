@@ -41,7 +41,7 @@ public class CreateUserTest {
     @Test
     @DisplayName("Create user")
     @Step("Compare message and status of response")
-    public void userIsCreated() {
+    public void createUser() {
         ValidatableResponse response = Specifications.postRequest(user, URL + "/register");
         if (message != null) {
             response.assertThat().body("message", equalTo(message))
@@ -57,7 +57,7 @@ public class CreateUserTest {
     }
 
     @AfterClass
-    public static void deleteCourier() {
+    public static void deleteUser() {
         if (!accessToken.isEmpty()) {
             RestAssured.given().auth().oauth2(accessToken)
                     .baseUri("https://stellarburgers.nomoreparties.site/api/auth/user")

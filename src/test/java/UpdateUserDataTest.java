@@ -12,7 +12,8 @@ import org.junit.runners.Parameterized;
 import static org.hamcrest.Matchers.*;
 
 @RunWith(Parameterized.class)
-public class LoginUserTest {
+public class UpdateUserDataTest {
+    private final UserData userData;
     private final int status;
     private final String message;
     private final static String USER_EMAIL = "Smaug" + Math.random() + "@example.com";
@@ -20,12 +21,12 @@ public class LoginUserTest {
     private final static String USER_NAME = "Smaug" + Math.random();
     private final static String URL = "/api/auth";
     private static String accessToken = "";
-    private final Login login;
 
-    public LoginUserTest(Login login, int status, String message) {
-        this.login = login;
+    public UpdateUserDataTest(UserData userData, int status, String message) {
+        this.userData = userData;
         this.status = status;
         this.message = message;
+
     }
 
     @BeforeClass
@@ -39,25 +40,23 @@ public class LoginUserTest {
     @Parameterized.Parameters
     public static Object[][] userData() {
         return new Object[][]{
-                {new Login(USER_EMAIL, PASSWORD), 200, null},
-                {new Login("Master007@ya.ru", PASSWORD), 401, "email or password are incorrect"},
-                {new Login(USER_EMAIL, "12345"), 401, "email or password are incorrect"},
-                {new Login("Master007@ya.ru", "12345"), 401, "email or password are incorrect"},
-                {new Login("Master007@ya.ru", null), 401, "email or password are incorrect"},
-                {new Login(null, "12345"), 401, "email or password are incorrect"},
+                {new UserData(USER_EMAIL, USER_NAME + "_Updated"), 200, null},
+                {new UserData(USER_EMAIL, USER_NAME), 401, "You should be authorised"},
         };
     }
 
     @Test
-    @DisplayName("Login user")
+    @DisplayName("Update user data")
     @Step("Compare message and status of response")
-    public void userLogin() {
-        ValidatableResponse response = Specifications.postRequest(login, URL + "/login");
+    public void updateUserData() {
+        ValidatableResponse response;
         if (message != null) {
+            response = Specifications.patchRequest(userData, URL + "/user");
             response.assertThat().body("message", equalTo(message))
                     .and()
                     .statusCode(status);
         } else {
+            response = Specifications.patchRequest(userData, URL + "/user", accessToken);
             response.assertThat()
                     .statusCode(status);
         }
@@ -71,7 +70,6 @@ public class LoginUserTest {
                     .contentType(ContentType.JSON)
                     .when()
                     .delete().then().assertThat().statusCode(202);
-
         }
     }
 }

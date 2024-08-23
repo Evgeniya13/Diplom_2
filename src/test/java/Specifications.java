@@ -40,4 +40,22 @@ public class Specifications {
                 .post(url).then();
     }
 
+    public static ValidatableResponse patchRequest(Object object, String url) {
+        return RestAssured.given()
+                .baseUri(BASE_URL)
+                .contentType(ContentType.JSON)
+                .body(object)
+                .when()
+                .patch(url).then();
+    }
+
+    public static ValidatableResponse patchRequest(Object object, String url, String token) {
+        return RestAssured.given().auth().oauth2(token)
+                .baseUri(BASE_URL)
+                .contentType(ContentType.JSON)
+                .body(object)
+                .when()
+                .patch(url).then();
+    }
+
 }
