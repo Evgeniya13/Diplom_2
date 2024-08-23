@@ -4,6 +4,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -11,8 +12,7 @@ import org.junit.runners.Parameterized;
 import static org.hamcrest.Matchers.*;
 
 @RunWith(Parameterized.class)
-public class UserTest {
-    private final User user;
+public class LoginUserTest {
     private final int status;
     private final String message;
     private final static String USER_EMAIL = "Smaug" + Math.random() + "@example.com";
@@ -20,29 +20,39 @@ public class UserTest {
     private final static String USER_NAME = "Smaug" + Math.random();
     private final static String URL = "/api/auth";
     private static String accessToken = "";
+    private final Login login;
 
-    public UserTest(User user, int status, String message) {
-        this.user = user;
+    public LoginUserTest(Login login, int status, String message) {
+        this.login = login;
         this.status = status;
         this.message = message;
+    }
+
+    @BeforeClass
+    @Step("Create user before test")
+    public static void createTestCourier() {
+        ValidatableResponse response =  Specifications.postRequest(new User(USER_EMAIL, PASSWORD, USER_NAME), URL + "/register");
+        response.assertThat().statusCode(200);
+        accessToken = response.extract().path("accessToken").toString().split(" ")[1];
     }
 
     @Parameterized.Parameters
     public static Object[][] userData() {
         return new Object[][]{
-                {new User(USER_EMAIL, PASSWORD, USER_NAME), 200, null},
-                {new User(USER_EMAIL, PASSWORD, USER_NAME), 403, "User already exists"},
-                {new User("Master007@ya.ru", null, "Michail Bulgakov"), 403, "Email, password and name are required fields"},
-                {new User(null, "12345", "Michail Bulgakov"), 403, "Email, password and name are required fields"},
-                {new User("Master007@ya.ru", "12345", null), 403, "Email, password and name are required fields"},
+                {new Login(USER_EMAIL, PASSWORD), 200, null},
+                {new Login("Master007@ya.ru", PASSWORD), 401, "email or password are incorrect"},
+                {new Login(USER_EMAIL, "12345"), 401, "email or password are incorrect"},
+                {new Login("Master007@ya.ru", "12345"), 401, "email or password are incorrect"},
+                {new Login("Master007@ya.ru", null), 401, "email or password are incorrect"},
+                {new Login(null, "12345"), 401, "email or password are incorrect"},
         };
     }
 
     @Test
-    @DisplayName("Create user")
+    @DisplayName("Login user")
     @Step("Compare message and status of response")
-    public void userIsCreated() {
-        ValidatableResponse response = Specifications.postRequest(user, URL + "/register");
+    public void userLogin() {
+        ValidatableResponse response = Specifications.postRequest(login, URL + "/login");
         if (message != null) {
             response.assertThat().body("message", equalTo(message))
                     .and()
@@ -50,20 +60,18 @@ public class UserTest {
         } else {
             response.assertThat()
                     .statusCode(status);
-            if(status == 200) {
-                accessToken = response.extract().path("accessToken").toString().split(" ")[1];
-            }
         }
     }
 
     @AfterClass
-    public static void deleteCourier() {
+    public static void deleteUser() {
         if (!accessToken.isEmpty()) {
             RestAssured.given().auth().oauth2(accessToken)
                     .baseUri("https://stellarburgers.nomoreparties.site/api/auth/user")
                     .contentType(ContentType.JSON)
                     .when()
                     .delete().then().assertThat().statusCode(202);
+
         }
     }
 }
