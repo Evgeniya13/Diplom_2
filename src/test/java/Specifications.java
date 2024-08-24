@@ -58,4 +58,15 @@ public class Specifications {
                 .patch(url).then();
     }
 
+    public static void deleteUser(String token) {
+        if (!token.isEmpty()) {
+            RestAssured.given().auth().oauth2(token)
+                    .baseUri(BASE_URL + "/api/auth/user")
+                    .contentType(ContentType.JSON)
+                    .when()
+                    .delete().then().assertThat().statusCode(202);
+
+        }
+    }
+
 }
