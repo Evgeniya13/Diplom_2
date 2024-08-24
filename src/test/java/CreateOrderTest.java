@@ -17,6 +17,8 @@ public class CreateOrderTest {
     private final Order order;
     private final int status;
     private final String message;
+
+    private final boolean auth;
     private final static String USER_EMAIL = "Smaug" + Math.random() + "@example.com";
     private final static String PASSWORD = "Smaug1234";
     private final static String USER_NAME = "Smaug" + Math.random();
@@ -24,11 +26,13 @@ public class CreateOrderTest {
     private static String accessToken = "";
 
     private final static String[] ingredientsForBurger = {"61c0c5a71d1f82001bdaaa6d", "61c0c5a71d1f82001bdaaa71", "61c0c5a71d1f82001bdaaa72"};
+    private final static String[] ingredientsWithWrongHash = {"61c0c5a71d1f820bdaaa6d", "61c0c5aaa71", "61c0c5a71d1f8200"};
 
-    public CreateOrderTest(Order order, int status, String message) {
+    public CreateOrderTest(Order order, int status, String message, boolean auth) {
         this.order = order;
         this.status = status;
         this.message = message;
+        this.auth = auth;
     }
 
     @BeforeClass
@@ -42,28 +46,32 @@ public class CreateOrderTest {
     @Parameterized.Parameters
     public static Object[][] orderData() {
         return new Object[][]{
-                {new Order(ingredientsForBurger), 200, null},
-//                {new Login("Master007@ya.ru", PASSWORD), 401, "email or password are incorrect"},
-//                {new Login(USER_EMAIL, "12345"), 401, "email or password are incorrect"},
-//                {new Login("Master007@ya.ru", "12345"), 401, "email or password are incorrect"},
-//                {new Login("Master007@ya.ru", null), 401, "email or password are incorrect"},
-//                {new Login(null, "12345"), 401, "email or password are incorrect"},
+                {new Order(ingredientsForBurger), 200, null, true},
+                {new Order(ingredientsForBurger), 200, null, false},
+                {new Order(null), 400, "Ingredient ids must be provided", true},
+                {new Order(ingredientsWithWrongHash), 500, null, true},
         };
     }
 
     @Test
     @DisplayName("Create order")
     @Step("Compare message and status of response")
-    public void userLogin() {
-        ValidatableResponse response = Specifications.postRequest(order, URL + "/orders", accessToken);
-        if (message != null) {
-            response.assertThat().body("message", equalTo(message))
-                    .and()
-                    .statusCode(status);
+    public void createOrder() {
+        ValidatableResponse response;
+        if (auth) {
+            response = Specifications.postRequest(order, URL + "/orders", accessToken);
+            if (message != null) {
+                response.assertThat().body("message", equalTo(message))
+                        .and()
+                        .statusCode(status);
+            } else {
+                response.assertThat()
+                        .statusCode(status);
+            }
         } else {
+            response = Specifications.postRequest(order, URL + "/orders");
             response.assertThat()
                     .statusCode(status);
-            System.out.println(response.extract().body().toString());
         }
     }
 
