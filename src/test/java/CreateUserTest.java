@@ -12,14 +12,14 @@ import static org.hamcrest.Matchers.*;
 
 @RunWith(Parameterized.class)
 public class CreateUserTest {
-    private final User user;
-    private final int status;
-    private final String message;
     private final static String USER_EMAIL = "Smaug" + Math.random() + "@example.com";
     private final static String PASSWORD = "Smaug1234";
     private final static String USER_NAME = "Smaug" + Math.random();
-    private final static String URL = "/api/auth";
+    private final static String URL = "/auth/register";
     private static String accessToken = "";
+    private final User user;
+    private final int status;
+    private final String message;
 
     public CreateUserTest(User user, int status, String message) {
         this.user = user;
@@ -42,7 +42,7 @@ public class CreateUserTest {
     @DisplayName("Create user")
     @Step("Compare message and status of response")
     public void createUser() {
-        ValidatableResponse response = Specifications.postRequest(user, URL + "/register");
+        ValidatableResponse response = Specifications.postRequest(user, URL);
         if (message != null) {
             response.assertThat().body("message", equalTo(message))
                     .and()
@@ -57,13 +57,10 @@ public class CreateUserTest {
     }
 
     @AfterClass
+    @Step("Delete user after test")
     public static void deleteUser() {
         if (!accessToken.isEmpty()) {
-            RestAssured.given().auth().oauth2(accessToken)
-                    .baseUri("https://stellarburgers.nomoreparties.site/api/auth/user")
-                    .contentType(ContentType.JSON)
-                    .when()
-                    .delete().then().assertThat().statusCode(202);
+            Specifications.deleteUser(accessToken);
         }
     }
 }

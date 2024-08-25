@@ -15,14 +15,14 @@ import static org.hamcrest.Matchers.*;
 
 @RunWith(Parameterized.class)
 public class UpdateUserDataTest {
-    private final UserData userData;
-    private final int status;
-    private final String message;
     private final static String USER_EMAIL = "smaug" + Math.random() + "@example.com";
     private final static String PASSWORD = "smaug1234";
     private final static String USER_NAME = "smaug" + Math.random();
-    private final static String URL = "/api/auth";
+    private final static String URL = "/auth/user";
     private static String accessToken = "";
+    private final UserData userData;
+    private final int status;
+    private final String message;
 
     public UpdateUserDataTest(UserData userData, int status, String message) {
         this.userData = userData;
@@ -32,11 +32,9 @@ public class UpdateUserDataTest {
     }
 
     @BeforeClass
-    @Step("Create user before test")
+    @Step("Create user and get accessToken before test")
     public static void createTestUser() {
-        ValidatableResponse response =  Specifications.postRequest(new User(USER_EMAIL, PASSWORD, USER_NAME), URL + "/register");
-        response.assertThat().statusCode(200);
-        accessToken = response.extract().path("accessToken").toString().split(" ")[1];
+        accessToken = Specifications.createUser(USER_EMAIL, PASSWORD, USER_NAME);
     }
 
     @Parameterized.Parameters
@@ -54,12 +52,12 @@ public class UpdateUserDataTest {
     public void updateUserData() {
         ValidatableResponse response;
         if (message != null) {
-            response = Specifications.patchRequest(userData, URL + "/user");
+            response = Specifications.patchRequest(userData, URL);
             response.assertThat().body("message", equalTo(message))
                     .and()
                     .statusCode(status);
         } else {
-            response = Specifications.patchRequest(userData, URL + "/user", accessToken);
+            response = Specifications.patchRequest(userData, URL, accessToken);
             response.assertThat()
                     .statusCode(status);
             JsonPath jsonPath = response.extract().jsonPath();
@@ -70,13 +68,10 @@ public class UpdateUserDataTest {
     }
 
     @AfterClass
+    @Step("Delete user after test")
     public static void deleteUser() {
         if (!accessToken.isEmpty()) {
-            RestAssured.given().auth().oauth2(accessToken)
-                    .baseUri("https://stellarburgers.nomoreparties.site/api/auth/user")
-                    .contentType(ContentType.JSON)
-                    .when()
-                    .delete().then().assertThat().statusCode(202);
+            Specifications.deleteUser(accessToken);
         }
     }
 }

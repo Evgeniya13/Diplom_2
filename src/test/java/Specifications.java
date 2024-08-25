@@ -4,7 +4,7 @@ import io.restassured.response.ValidatableResponse;
 
 public class Specifications {
 
-    final static String BASE_URL = "https://stellarburgers.nomoreparties.site/";
+    final static String BASE_URL = "https://stellarburgers.nomoreparties.site/api";
 
     public static ValidatableResponse getRequest(String url) {
         return RestAssured.given()
@@ -58,14 +58,19 @@ public class Specifications {
                 .patch(url).then();
     }
 
+    public static String createUser(String email, String password, String name) {
+        ValidatableResponse response = Specifications.postRequest(new User(email, password, name), BASE_URL + "/auth/register");
+        response.assertThat().statusCode(200);
+        return response.extract().path("accessToken").toString().split(" ")[1];
+    }
+
     public static void deleteUser(String token) {
         if (!token.isEmpty()) {
             RestAssured.given().auth().oauth2(token)
-                    .baseUri(BASE_URL + "/api/auth/user")
+                    .baseUri(BASE_URL + "/auth/user")
                     .contentType(ContentType.JSON)
                     .when()
                     .delete().then().assertThat().statusCode(202);
-
         }
     }
 
