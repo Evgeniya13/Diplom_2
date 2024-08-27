@@ -1,6 +1,9 @@
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import io.restassured.path.json.JsonPath;
 import io.restassured.response.ValidatableResponse;
+
+import java.util.ArrayList;
 
 public class Specifications {
 
@@ -72,6 +75,12 @@ public class Specifications {
                     .when()
                     .delete().then().assertThat().statusCode(202);
         }
+    }
+
+    public static ArrayList<String> getIngredients() {
+        ValidatableResponse response = Specifications.getRequest("/ingredients");
+        response.assertThat().statusCode(200);
+        return response.extract().path("data._id");
     }
 
 }

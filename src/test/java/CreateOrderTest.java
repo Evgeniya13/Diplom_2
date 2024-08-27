@@ -7,6 +7,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import static org.hamcrest.Matchers.*;
 
 
@@ -16,9 +19,9 @@ public class CreateOrderTest {
     private final static String PASSWORD = "Smaug1234";
     private final static String USER_NAME = "Smaug" + Math.random();
     private final static String URL = "/orders";
-    private final static String[] INGREDIENTS_FOR_ORDER = {"61c0c5a71d1f82001bdaaa6d", "61c0c5a71d1f82001bdaaa71", "61c0c5a71d1f82001bdaaa72"};
-    private final static String[] INGREDIENTS_FOR_ORDER_WITH_WRONG_HASH = {"61c0c5a71d1f820bdaaa6d", "61c0c5aaa71", "61c0c5a71d1f8200"};
     private static String accessToken = "";
+    private final static String[] INGREDIENTS_FOR_ORDER_WITH_WRONG_HASH = {"61c0c5a71d1f820bdaaa6d", "61c0c5aaa71", "61c0c5a71d1f8200"};
+    private final static ArrayList<String> ingredientsWithWrongHash = new ArrayList<>(Arrays.asList(INGREDIENTS_FOR_ORDER_WITH_WRONG_HASH));
     private final Order order;
     private final int status;
     private final String message;
@@ -40,10 +43,10 @@ public class CreateOrderTest {
     @Parameterized.Parameters
     public static Object[][] orderData() {
         return new Object[][]{
-                {new Order(INGREDIENTS_FOR_ORDER), 200, null, true},
-                {new Order(INGREDIENTS_FOR_ORDER), 200, null, false},
+                {new Order(Specifications.getIngredients()), 200, null, true},
+                {new Order(Specifications.getIngredients()), 200, null, false},
                 {new Order(null), 400, "Ingredient ids must be provided", true},
-                {new Order(INGREDIENTS_FOR_ORDER_WITH_WRONG_HASH), 500, null, true},
+                {new Order(ingredientsWithWrongHash), 500, null, true},
         };
     }
 

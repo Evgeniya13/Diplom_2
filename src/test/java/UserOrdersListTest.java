@@ -8,6 +8,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.util.ArrayList;
+
 import static org.hamcrest.Matchers.*;
 
 @RunWith(Parameterized.class)
@@ -16,7 +18,7 @@ public class UserOrdersListTest {
     private final static String PASSWORD = "Smaug1234";
     private final static String USER_NAME = "Smaug" + Math.random();
     private final static String URL = "/orders";
-    private final static String[] INGREDIENTS_FOR_ORDER = {"61c0c5a71d1f82001bdaaa6d", "61c0c5a71d1f82001bdaaa71", "61c0c5a71d1f82001bdaaa72"};
+    private static ArrayList<String> ingredientsForOrder;
     private static String accessToken = "";
     private final int status;
     private final String message;
@@ -29,15 +31,16 @@ public class UserOrdersListTest {
     }
 
     @BeforeClass
-    @Step("Create user and order before test")
+    @Step("Create user and get ingredients before test")
     public static void createTestUser() {
+        ingredientsForOrder = Specifications.getIngredients();
         accessToken = Specifications.createUser(USER_EMAIL, PASSWORD, USER_NAME);
     }
 
     @BeforeClass
     @Step("Create order before test")
     public static void createOrder() {
-        Specifications.postRequest(new Order(INGREDIENTS_FOR_ORDER), URL, accessToken).assertThat().statusCode(200);
+        Specifications.postRequest(new Order(ingredientsForOrder), URL, accessToken).assertThat().statusCode(200);
     }
 
     @Parameterized.Parameters
